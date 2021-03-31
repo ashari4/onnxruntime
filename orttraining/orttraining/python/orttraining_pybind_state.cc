@@ -505,7 +505,8 @@ py::class_<TrainingAgent>(m, "TrainingAgent", R"pbdoc(This is the main class use
       .def_readwrite("initializer_names_to_train", &ModuleGradientGraphBuilderConfiguration::initializer_names_to_train)
       .def_readwrite("input_names_require_grad", &ModuleGradientGraphBuilderConfiguration::input_names_require_grad)
       .def_readwrite("use_invertible_layernorm_grad",
-                     &ModuleGradientGraphBuilderConfiguration::use_invertible_layernorm_grad);
+                     &ModuleGradientGraphBuilderConfiguration::use_invertible_layernorm_grad)
+      .def_readwrite("build_gradient_graph", &ModuleGradientGraphBuilderConfiguration::build_gradient_graph);
 
   py::class_<TrainingGraphInfo> training_graph_info(m, "TrainingGraphInfo",
                                                 R"pbdoc(The information of split graphs for frontend.)pbdoc");
@@ -536,15 +537,11 @@ py::class_<TrainingAgent>(m, "TrainingAgent", R"pbdoc(This is the main class use
               const std::vector<std::vector<int64_t>>& input_shapes) {
              ORT_THROW_IF_ERROR(module_gradient_graph_builder->Build(&input_shapes));
            })
-      .def("get_training_model",
+      .def("get_model",
            [](ModuleGradientGraphBuilder* module_gradient_graph_builder) {
              return py::bytes(module_gradient_graph_builder->GetGradientModel());
            })
-      .def("get_inference_model",
-           [](ModuleGradientGraphBuilder* module_gradient_graph_builder) {
-             return py::bytes(module_gradient_graph_builder->GetInferenceModel());
-           })
-      .def("get_training_graph_info", [](ModuleGradientGraphBuilder* module_gradient_graph_builder) {
+      .def("get_graph_info", [](ModuleGradientGraphBuilder* module_gradient_graph_builder) {
         return module_gradient_graph_builder->GetTrainingGraphInfo();
       });
 }

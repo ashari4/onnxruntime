@@ -789,9 +789,9 @@ def test_changes_input_requires_grad_reinitializes_module_gradient_graph_builder
     model = ORTModule(model)
     x = torch.randn(N, D_in, device=device, requires_grad=True)
     model(x.data)
-    module_gradient_graph_builder = model._module_gradient_graph_builder
+    module_gradient_graph_builder_training = model._module_gradient_graph_builder_training
     model(x)
-    assert module_gradient_graph_builder != model._module_gradient_graph_builder
+    assert module_gradient_graph_builder_training != model._module_gradient_graph_builder_training
 
 @pytest.mark.parametrize("device", ['cuda'])
 def test_input_requires_grad_backward_creates_input_grad_as_required0(device):
