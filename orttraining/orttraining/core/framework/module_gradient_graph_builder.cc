@@ -77,14 +77,13 @@ Status ModuleGradientGraphBuilder::Build(const std::vector<std::vector<int64_t>>
     SetConcreteInputShapes(*input_shapes_ptr);
   }
 
+  // Optimize the inference graph, and if needed, build the gradient graph.
+  ORT_RETURN_IF_ERROR(OptimizeInferenceGraphAndBuildGradientGraph());
   if (!config_.build_gradient_graph) {
     // This graph will be used only for inferencing, so stop right here.
-    // No need to build the gradient graph.
+    // The gradient graph has not been built for this graph
     return Status::OK();
   }
-
-  // Build the gradient graph.
-  ORT_RETURN_IF_ERROR(BuildGradientGraph());
 
   // Handle user outputs and output grads.
   HandleOutputsAndGrads();
@@ -131,7 +130,21 @@ void ModuleGradientGraphBuilder::SetConcreteInputShapes(const std::vector<std::v
   gradient_graph.SetInputs(input_args);
 }
 
-Status ModuleGradientGraphBuilder::BuildGradientGraph() {
+Status ModuleGradientGraphBuilder::OptimizeInferenceGraphAndBuildGradientGraph() {
+  std::unordered_set<std::string> x_node_arg_names;
+  ORT_RETURN_IF_ERROR(OptimizeInferenceGraph(x_node_arg_names));
+  if (!config_.build_gradient_graph) {
+    // This graph will be used only for inferencing, so stop right here.
+    // No need to build a gradient graph.
+    return Status::OK();
+  }
+
+  ORT_RETURN_IF_ERROR(BuildGradientGraph(x_node_arg_names));
+
+  return Status::OK();
+}
+
+Status ModuleGradientGraphBuilder::OptimizeInferenceGraph(std::unordered_set<std::string>& x_node_arg_names) {
   // Resolve original graph, register and apply transformers for pre-training.
   Graph& gradient_graph = gradient_model_->MainGraph();
   ORT_RETURN_IF_ERROR(gradient_graph.Resolve());
@@ -141,7 +154,6 @@ Status ModuleGradientGraphBuilder::BuildGradientGraph() {
   std::unique_ptr<CPUExecutionProvider> cpu_execution_provider =
       onnxruntime::make_unique<CPUExecutionProvider>(CPUExecutionProviderInfo());
 
-  std::unordered_set<std::string> x_node_arg_names;
   std::set_union(config_.initializer_names_to_train.begin(), config_.initializer_names_to_train.end(),
                  config_.input_names_require_grad.begin(), config_.input_names_require_grad.end(),
                  std::inserter(x_node_arg_names, x_node_arg_names.begin()));
@@ -164,6 +176,12 @@ Status ModuleGradientGraphBuilder::BuildGradientGraph() {
     ORT_RETURN_IF_ERROR(
         graph_transformation_mgr.ApplyTransformers(gradient_graph, static_cast<TransformerLevel>(i), *logger_));
   }
+
+  return Status::OK();
+}
+
+Status ModuleGradientGraphBuilder::BuildGradientGraph(const std::unordered_set<std::string>& x_node_arg_names) {
+  Graph& gradient_graph = gradient_model_->MainGraph();
 
   // Build gradient graph.
   GradientGraphConfiguration gradient_graph_config{};

@@ -87,8 +87,14 @@ class ModuleGradientGraphBuilder {
   // Set concrete shapes for graph inputs.
   void SetConcreteInputShapes(const std::vector<std::vector<int64_t>>& input_shapes);
 
+  // Apply graph transformations and then build the gradient graph
+  Status OptimizeInferenceGraphAndBuildGradientGraph();
+
+  // Apply graph transformers
+  Status OptimizeInferenceGraph(std::unordered_set<std::string>& x_node_arg_names);
+
   // Build gradient graph.
-  Status BuildGradientGraph();
+  Status BuildGradientGraph(const std::unordered_set<std::string>& x_node_arg_names);
 
   // Handle user outputs and output grads.
   void HandleOutputsAndGrads();
