@@ -147,10 +147,12 @@ class ORTModule(torch.nn.Module):
                 _ortmodule_io.parse_inputs_for_onnx_export(
                     self._original_module_parameters, self._exported_onnx_training_model if self._is_training() else self._exported_onnx_inference_model, *inputs, **kwargs)
             # Reinitialize gradient graph builder if the mode is training mode,
-            # and the inputs and initializers requiring gradient have changed.
+            # and the inputs or initializers requiring gradient have changed.
             build_gradient_graph = build_gradient_graph or \
                 self._reinitialize_module_gradient_graph_builder(input_names_require_grad)
 
+            # Build the gradient graph if the model is in train mode,
+            # or build the inference graph if model is in eval mode
             if build_gradient_graph:
                 self._current_input_shape = new_input_shape
                 self._build_training_graph()
@@ -158,16 +160,16 @@ class ORTModule(torch.nn.Module):
 
             module_device = _utils.get_device_from_module(
                 self._original_module)
+            # The _training_session/_inference_session should be created every time
+            # the graph was built or if the device changed between calls to forward
             create_execution_session = \
                 build_gradient_graph or self._device != module_device
             if self._device != module_device:
                 self._device = module_device
 
             if create_execution_session:
-                # Create execution session creates both the training_session as well
-                # as the inference_session. The inference_session is only created when
-                # the model is set to eval mode. However, the training session is always
-                # created.
+                # Create execution session creates both the training_session or the
+                # inference_session depending on the mode of the model.
                 self._create_execution_session()
 
             # Logic to remove the inference session when the model is in train mode
@@ -180,6 +182,8 @@ class ORTModule(torch.nn.Module):
                 # If the model was set to eval mode from train mode, create the inference session
                 self._create_inference_session(*self._get_session_config())
 
+            # If the model needs to be executed by the inference session, execute it here rightaway,
+            # without needing to be invoked in the autograd forward.
             if not self._is_training():
                 return _ortmodule_io.populate_user_output_from_schema_and_outputs(
                     self._original_module_output_schema,
@@ -382,6 +386,7 @@ class ORTModule(torch.nn.Module):
         return module_gradient_graph_builder
 
     def _set_device_from_module(self):
+        # Get the device from the module and save it to self._device
         device_from_module = _utils.get_device_from_module(
             self._original_module)
         if not self._device or self._device != device_from_module:
@@ -391,6 +396,10 @@ class ORTModule(torch.nn.Module):
                     'A device must be specified in the model or data!')
 
     def _get_inference_graph_and_init_gradient_graph_builder(self, *inputs, **kwargs):
+        # 1. Set the self._device from the user module
+        # 2. Export the user model either under train mode or under eval mode
+        # 3. Initialize the module gradient graph builder with the exported model
+        # Return True if the model needed to be exported, False if no export was required.
         if self._is_training() and not self._exported_onnx_training_model:
             self._set_device_from_module()
             self._exported_onnx_training_model = \
@@ -574,6 +583,9 @@ class ORTModule(torch.nn.Module):
             _ortmodule_io.deepcopy_model_input(
                 *inputs, **kwargs)
 
+        # Ops behaving differently under train/eval mode need to exported with the
+        # correct training flag to reflect the expected behavior.
+        # For example, the Dropout node in a model is dropped under eval mode.
         training_flag = torch.onnx.TrainingMode.TRAINING \
             if self._is_training() else torch.onnx.TrainingMode.EVAL
         try:
