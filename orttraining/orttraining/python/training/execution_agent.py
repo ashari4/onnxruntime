@@ -17,7 +17,7 @@ class ExecutionAgentOutput(object):
 
 class InferenceAgent(object):
     """
-    This is the main class used to run a ORTModule model inferencing.
+    This is the main class used to run an ORTModule model inferencing.
     """
 
     def __init__(self, path_or_bytes, session_options=None, providers=None, provider_options=None):
@@ -74,7 +74,7 @@ class InferenceAgent(object):
 
 class TrainingAgent(object):
     """
-    This is the main class used to run a ORTModule model training.
+    This is the main class used to run an ORTModule model training.
     """
 
     def __init__(self, path_or_bytes, session_options=None, providers=None, provider_options=None):

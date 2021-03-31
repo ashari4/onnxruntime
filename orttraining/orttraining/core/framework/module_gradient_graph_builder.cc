@@ -77,11 +77,14 @@ Status ModuleGradientGraphBuilder::Build(const std::vector<std::vector<int64_t>>
     SetConcreteInputShapes(*input_shapes_ptr);
   }
 
-  // Build the gradient graph.
-  ORT_RETURN_IF_ERROR(BuildGradientGraph());
   if (!config_.build_gradient_graph) {
+    // This graph will be used only for inferencing, so stop right here.
+    // No need to build the gradient graph.
     return Status::OK();
   }
+
+  // Build the gradient graph.
+  ORT_RETURN_IF_ERROR(BuildGradientGraph());
 
   // Handle user outputs and output grads.
   HandleOutputsAndGrads();
@@ -160,12 +163,6 @@ Status ModuleGradientGraphBuilder::BuildGradientGraph() {
   for (int i = static_cast<int>(TransformerLevel::Level1); i <= static_cast<int>(TransformerLevel::MaxLevel); i++) {
     ORT_RETURN_IF_ERROR(
         graph_transformation_mgr.ApplyTransformers(gradient_graph, static_cast<TransformerLevel>(i), *logger_));
-  }
-
-  if (!config_.build_gradient_graph) {
-    // This graph will be used only for inferencing, so stop right here.
-    // No need to build a gradient graph.
-    return Status::OK();
   }
 
   // Build gradient graph.
