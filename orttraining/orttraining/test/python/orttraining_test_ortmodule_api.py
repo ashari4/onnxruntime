@@ -473,7 +473,7 @@ def test_input_requires_grad_saved(device):
     model = ORTModule(model)
     x = torch.randn(N, D_in, device=device, requires_grad=True) + 1
     model(x)
-    assert model._input_names_require_grad == ['input1']
+    assert model._input_info.require_grad_names == ['input1']
 
 @pytest.mark.parametrize("device", ['cuda', 'cpu'])
 def test_input_requires_grad_backward_creates_input_grad(device):
@@ -1566,3 +1566,31 @@ def test_model_with_constant_and_registered_parameters():
     # Make sure model runs without any exception
     output = ort_model(x)
     assert output is not None
+
+
+def test_forward_dynamic_args():
+    device = 'cuda'
+
+    N, D_in, H, D_out = 64, 784, 500, 10
+    model = NeuralNetPositionalArguments(input_size=D_in, hidden_size=H, num_classes=D_out).to(device)
+    model = ORTModule(model)
+    args_size1 = [torch.randn(N, D_in, device=device)]*4
+    args_size2 = [torch.randn(N, D_in, device=device)]*3
+    args_size3 = [torch.randn(N, D_in, device=device)]*5
+
+    # Make sure model runs without any exception
+    for _ in range(2):
+        # Train model with one set of input
+        for _ in range(10):
+            output = model(*args_size1)
+            assert output is not None
+
+        # Decrease number of inputs and train some more
+        for _ in range(10):
+            output = model(*args_size2)
+            assert output is not None
+
+        # Increase number of inputs and train some more
+        for _ in range(10):
+            output = model(*args_size2)
+            assert output is not None
