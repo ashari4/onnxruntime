@@ -175,7 +175,6 @@ class ORTModule(torch.nn.Module):
                 # The inference session is kept around only while it is required.
                 # In case the model was set to train mode from eval mode,
                 # clear the inference session
-                self._onnx_inference = None
                 self._inference_session = None
             elif not self._is_training() and not self._inference_session:
                 # If the model was set to eval mode from train mode, create the inference session
