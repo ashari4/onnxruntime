@@ -1626,7 +1626,8 @@ TEST(MathOpTest, LessOrEqual) {
   test.AddInput<float>("A", dims, {1.0f, 0.0f, -1.0f, -1.0f});
   test.AddInput<float>("B", dims, {1.0f, 1.0f, 2.0f, -1.0f});
   test.AddOutput<bool>("C", dims, {true, true, true, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, LessOrEqual_Scalar0) {
@@ -1634,7 +1635,8 @@ TEST(MathOpTest, LessOrEqual_Scalar0) {
   test.AddInput<float>("A", {1}, {1.0f});
   test.AddInput<float>("B", {4}, {1.0f, 1.5f, 2.0f, -1.0f});
   test.AddOutput<bool>("C", {4}, {true, true, true, false});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, LessOrEqual_Scalar1) {
@@ -1642,7 +1644,8 @@ TEST(MathOpTest, LessOrEqual_Scalar1) {
   test.AddInput<float>("A", {4}, {1.0f, 0.5f, 2.0f, -1.0f});
   test.AddInput<float>("B", {1}, {1.0f});
   test.AddOutput<bool>("C", {4}, {true, true, false, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, LessOrEqual_int64_Scalar1) {
@@ -1650,14 +1653,16 @@ TEST(MathOpTest, LessOrEqual_int64_Scalar1) {
   test.AddInput<int64_t>("A", {4}, {1, 0, 2, -1});
   test.AddInput<int64_t>("B", {1}, {1});
   test.AddOutput<bool>("C", {4}, {true, true, false, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 TEST(MathOpTest, LessOrEqual_broadcastAB) {
   OpTester test("LessOrEqual", 12);
   test.AddInput<int32_t>("A", {4, 2}, {10, 11, 12, 13, 14, 15, 16, 17});
   test.AddInput<int32_t>("B", {2}, {15, 7});
   test.AddOutput<bool>("C", {4, 2}, {true, false, true, false, true, false, false, false});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, LessOrEqual_broadcastBA) {
@@ -1665,7 +1670,8 @@ TEST(MathOpTest, LessOrEqual_broadcastBA) {
   test.AddInput<int32_t>("A", {2}, {15, 7});
   test.AddInput<int32_t>("B", {4, 2}, {10, 11, 12, 13, 14, 15, 16, 17});
   test.AddOutput<bool>("C", {4, 2}, {false, true, false, true, false, true, true, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, LessOrEqual_multidiretional_broadcastAB) {
@@ -1673,7 +1679,8 @@ TEST(MathOpTest, LessOrEqual_multidiretional_broadcastAB) {
   test.AddInput<int32_t>("A", {4, 1}, {10, 11, 12, 13});
   test.AddInput<int32_t>("B", {2}, {15, 7});
   test.AddOutput<bool>("C", {4, 2}, {true, false, true, false, true, false, true, false});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, LessOrEqual_multidiretional_broadcastBA) {
@@ -1681,7 +1688,8 @@ TEST(MathOpTest, LessOrEqual_multidiretional_broadcastBA) {
   test.AddInput<int32_t>("A", {2}, {15, 7});
   test.AddInput<int32_t>("B", {4, 1}, {10, 11, 12, 13});
   test.AddOutput<bool>("C", {4, 2}, {false, true, false, true, false, true, false, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, Greater_7) {
@@ -1767,7 +1775,8 @@ TEST(MathOpTest, GreaterOrEqual_12_float) {
   test.AddInput<float>("A", dims, {1.0f, 0.0f, -1.0f, -1.0f});
   test.AddInput<float>("B", dims, {1.0f, 1.0f, 2.0f, -1.0f});
   test.AddOutput<bool>("C", dims, {true, false, false, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, GreaterOrEqual_12_double) {
@@ -1776,7 +1785,8 @@ TEST(MathOpTest, GreaterOrEqual_12_double) {
   test.AddInput<double>("A", dims, {1.0, 0.0, 3.0, -1.0});
   test.AddInput<double>("B", dims, {1.0, 1.0, 2.0, -1.0});
   test.AddOutput<bool>("C", dims, {true, false, true, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, GreaterOrEqual_12_int32) {
@@ -1785,7 +1795,8 @@ TEST(MathOpTest, GreaterOrEqual_12_int32) {
   test.AddInput<int32_t>("A", dims, {10, 11, 12, 13});
   test.AddInput<int32_t>("B", dims, {15, 7, 12, 9});
   test.AddOutput<bool>("C", dims, {false, true, true, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, GreaterOrEqual_12_int64) {
@@ -1794,7 +1805,8 @@ TEST(MathOpTest, GreaterOrEqual_12_int64) {
   test.AddInput<int64_t>("A", dims, {10, 11, 12, 13});
   test.AddInput<int64_t>("B", dims, {15, 7, 12, 9});
   test.AddOutput<bool>("C", dims, {false, true, true, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, GreaterOrEqual_broadcastAB) {
@@ -1802,7 +1814,8 @@ TEST(MathOpTest, GreaterOrEqual_broadcastAB) {
   test.AddInput<int32_t>("A", {4, 2}, {10, 11, 12, 13, 14, 15, 16, 17});
   test.AddInput<int32_t>("B", {2}, {15, 7});
   test.AddOutput<bool>("C", {4, 2}, {false, true, false, true, false, true, true, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, GreaterOrEqual_broadcastBA) {
@@ -1810,7 +1823,8 @@ TEST(MathOpTest, GreaterOrEqual_broadcastBA) {
   test.AddInput<int32_t>("A", {2}, {15, 7});
   test.AddInput<int32_t>("B", {4, 2}, {10, 11, 12, 13, 14, 15, 16, 17});
   test.AddOutput<bool>("C", {4, 2}, {true, false, true, false, true, false, false, false});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, GreaterOrEqual_multidiretional_broadcastAB) {
@@ -1818,7 +1832,8 @@ TEST(MathOpTest, GreaterOrEqual_multidiretional_broadcastAB) {
   test.AddInput<int32_t>("A", {4, 1}, {10, 11, 12, 13});
   test.AddInput<int32_t>("B", {2}, {15, 7});
   test.AddOutput<bool>("C", {4, 2}, {false, true, false, true, false, true, false, true});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, GreaterOrEqual_multidiretional_broadcastBA) {
@@ -1826,7 +1841,8 @@ TEST(MathOpTest, GreaterOrEqual_multidiretional_broadcastBA) {
   test.AddInput<int32_t>("A", {2}, {15, 7});
   test.AddInput<int32_t>("B", {4, 1}, {10, 11, 12, 13});
   test.AddOutput<bool>("C", {4, 2}, {true, false, true, false, true, false, true, false});
-  test.Run();
+  test.Run(OpTester::ExpectResult::kExpectSuccess, "",
+               {kTensorrtExecutionProvider, kNnapiExecutionProvider, kOpenVINOExecutionProvider});
 }
 
 TEST(MathOpTest, Equal_bool) {
