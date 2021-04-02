@@ -5,7 +5,7 @@
 
 from . import _utils
 from . import _ortmodule_output_transformation as _ortmodule_io
-from ._ortmodule_suppress_output import suppress_output
+from . import _ortmodule_logger as _logger
 from onnxruntime.training import register_custom_ops_pytorch_exporter
 from onnxruntime.capi.onnxruntime_inference_collection import OrtValue
 from onnxruntime.capi import _pybind_state as C
@@ -18,8 +18,8 @@ import onnxruntime
 import torch
 import inspect
 from inspect import signature
-from enum import IntEnum
 from typing import Iterator, Optional, Tuple
+
 
 from torch.utils.dlpack import from_dlpack, to_dlpack
 from torch.utils.cpp_extension import load_inline
@@ -43,13 +43,6 @@ def _ortvalue_to_torch_tensor(ortvalue):
 def _ortvalue_from_torch_tensor(torch_tensor):
     return OrtValue(C.OrtValue.from_dlpack(to_dlpack(torch_tensor), torch_tensor.dtype == torch.bool))
 
-
-class Verbosity(IntEnum):
-    VERBOSE = 0
-    INFO = 1
-    WARNING = 2
-    ERROR = 3
-    FATAL = 4
 
 def _create_iobinding(io_binding, inputs, model, device):
     '''Creates IO binding for a `model` inputs and output'''
@@ -88,7 +81,7 @@ def _load_torch_allocator_cpp_extension(verbosity):
     return load_inline(name='inline_extension', cpp_sources=[torch_cuda_allocator_addresses_cpp_source],
                        functions=['cuda_caching_allocator_raw_alloc_address',
                                   'cuda_caching_allocator_raw_delete_address'],
-                       verbose=verbosity < Verbosity.WARNING, with_cuda=True)
+                       verbose=verbosity, with_cuda=True)
 
 
 class ORTModule(torch.nn.Module):
@@ -284,9 +277,6 @@ class ORTModule(torch.nn.Module):
 
         super(ORTModule, self).__init__()
 
-        # Verbosity for logging
-        self._verbosity = Verbosity.WARNING
-
         # Support contrib OPs
         register_custom_ops_pytorch_exporter.register_custom_op()
 
@@ -325,7 +315,7 @@ class ORTModule(torch.nn.Module):
         self._training_session = None
 
         # Log level
-        self._loglevel = getattr(logging, 'WARNING')
+        self._loglevel = _logger.LogLevel.WARNING
 
         # Debug flags
         self._save_onnx = False
@@ -341,7 +331,7 @@ class ORTModule(torch.nn.Module):
             False if self.is_rocm_pytorch else True)
         if self._use_external_cuda_allocator:
             self._torch_cuda_allocator = _load_torch_allocator_cpp_extension(
-                self._verbosity)
+                self._loglevel < _logger.LogLevel.WARNING)
             self._torch_alloc = self._torch_cuda_allocator.cuda_caching_allocator_raw_alloc_address()
             self._torch_free = self._torch_cuda_allocator.cuda_caching_allocator_raw_delete_address()
 
@@ -394,11 +384,13 @@ class ORTModule(torch.nn.Module):
         session_options.use_deterministic_compute = False
         # default to PRIORITY_BASED execution order
         session_options.execution_order = onnxruntime.ExecutionOrder.PRIORITY_BASED
+
         # 0:Verbose, 1:Info, 2:Warning. 3:Error, 4:Fatal. Default is 2.
-        session_options.log_severity_level = int(self._verbosity)
+        session_options.log_severity_level = int(self._loglevel)
         # enable dumping optimized training graph
         if self._save_onnx:
             session_options.optimized_model_filepath = self._save_onnx_prefix + '_training_optimized.onnx'
+
 
         self._training_session = onnxruntime.training.TrainingAgent(self._onnx_training.SerializeToString(),
                                                                     session_options, providers, provider_options)
@@ -489,7 +481,7 @@ class ORTModule(torch.nn.Module):
                 *inputs, **kwargs)
 
         try:
-            with torch.no_grad(), suppress_output():
+            with torch.no_grad(), _logger.suppress_output(log_level=self._loglevel):
                 torch.onnx.export(self._flattened_output_module,
                                   sample_inputs_copy + (sample_kwargs_copy, ),
                                   f,
@@ -499,7 +491,7 @@ class ORTModule(torch.nn.Module):
                                   do_constant_folding=False,
                                   training=torch.onnx.TrainingMode.TRAINING,
                                   dynamic_axes=dynamic_axes,
-                                  verbose=self._verbosity < Verbosity.WARNING,
+                                  verbose=self._loglevel < _logger.LogLevel.WARNING,
                                   export_params=False,
                                   keep_initializers_as_inputs=True)
         except RuntimeError as e:
