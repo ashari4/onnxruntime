@@ -5,6 +5,7 @@
 
 from . import _utils
 from . import _ortmodule_output_transformation as _ortmodule_io
+from ._ortmodule_suppress_output import suppress_output
 from onnxruntime.training import register_custom_ops_pytorch_exporter
 from onnxruntime.capi.onnxruntime_inference_collection import OrtValue
 from onnxruntime.capi import _pybind_state as C
@@ -488,7 +489,7 @@ class ORTModule(torch.nn.Module):
                 *inputs, **kwargs)
 
         try:
-            with torch.no_grad():
+            with torch.no_grad(), suppress_output():
                 torch.onnx.export(self._flattened_output_module,
                                   sample_inputs_copy + (sample_kwargs_copy, ),
                                   f,
