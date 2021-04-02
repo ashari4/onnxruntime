@@ -481,7 +481,7 @@ class ORTModule(torch.nn.Module):
                 *inputs, **kwargs)
 
         try:
-            with torch.no_grad(), _logger.suppress_output(log_level=self._loglevel):
+            with torch.no_grad(), _logger.suppress_os_stream_output(log_level=self._loglevel):
                 torch.onnx.export(self._flattened_output_module,
                                   sample_inputs_copy + (sample_kwargs_copy, ),
                                   f,

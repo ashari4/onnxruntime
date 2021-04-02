@@ -13,14 +13,14 @@ class LogLevel(IntEnum):
 
 
 @contextmanager 
-def suppress_output(suppress_stdout=True,suppress_stderr=True, f=os.devnull, log_level=LogLevel.WARNING):
+def suppress_os_stream_output(suppress_stdout=True,suppress_stderr=True, log_level=LogLevel.WARNING):
     """Supress output from being printed to stdout and stderr if log_level is WARNING or higher."""
 
-    # stdout and stderr is written to f instead
+    # stdout and stderr is written to devnull instead
     stdout = sys.stdout
     stderr = sys.stderr
 
-    with open(f, 'w') as fo:
+    with open(os.devnull, 'w') as fo:
         try:
             if suppress_stdout and log_level >= LogLevel.WARNING:
                 sys.stdout = fo
