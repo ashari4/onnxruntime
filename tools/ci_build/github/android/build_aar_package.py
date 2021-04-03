@@ -7,11 +7,15 @@ import os
 import pathlib
 import json
 import subprocess
+import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "..", "..", ".."))
 BUILD_PY = os.path.normpath(os.path.join(REPO_DIR, "tools", "ci_build", "build.py"))
 JAVA_ROOT = os.path.normpath(os.path.join(REPO_DIR, "java"))
+
+sys.path.insert(0, os.path.join(REPO_DIR, "tools", "python"))
+from util import (is_windows)
 
 # We by default will build all 4 ABIs
 DEFAULT_BUILD_ABIS = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
@@ -78,6 +82,9 @@ def _build_aar(args):
     _env['ANDROID_HOME'] = os.path.abspath(args.android_sdk_path)
     _env['ANDROID_NDK_HOME'] = os.path.abspath(args.android_ndk_path)
 
+    # If not using shell on Window, will not be able to find commands in path
+    _shell = True if is_windows() else False
+
     # Temp dirs to hold building results
     _intermediates_dir = os.path.join(build_dir, 'intermediates')
     _build_flavor = build_settings['build_flavor']
@@ -98,7 +105,7 @@ def _build_aar(args):
         if args.include_ops_by_config is not None:
             _build_command += ['--include_ops_by_config=' + args.include_ops_by_config]
 
-        subprocess.run(_build_command, env=_env, shell=False, check=True, cwd=REPO_DIR)
+        subprocess.run(_build_command, env=_env, shell=_shell, check=True, cwd=REPO_DIR)
 
         # create symbolic links for libonnxruntime.so and libonnxruntime4j_jni.so
         # to jnilibs/[abi] for later compiling the aar package
@@ -131,9 +138,9 @@ def _build_aar(args):
     ]
 
     # clean, build, and publish to a local directory
-    subprocess.run(_gradle_command + ['clean'], env=_env, shell=False, check=True, cwd=JAVA_ROOT)
-    subprocess.run(_gradle_command + ['build'], env=_env, shell=False, check=True, cwd=JAVA_ROOT)
-    subprocess.run(_gradle_command + ['publish'], env=_env, shell=False, check=True, cwd=JAVA_ROOT)
+    subprocess.run(_gradle_command + ['clean'], env=_env, shell=_shell, check=True, cwd=JAVA_ROOT)
+    subprocess.run(_gradle_command + ['build'], env=_env, shell=_shell, check=True, cwd=JAVA_ROOT)
+    subprocess.run(_gradle_command + ['publish'], env=_env, shell=_shell, check=True, cwd=JAVA_ROOT)
 
 
 def parse_args():
