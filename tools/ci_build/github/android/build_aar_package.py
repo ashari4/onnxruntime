@@ -11,11 +11,11 @@ import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "..", "..", ".."))
-BUILD_PY = os.path.normpath(os.path.join(REPO_DIR, "tools", "ci_build", "build.py"))
-JAVA_ROOT = os.path.normpath(os.path.join(REPO_DIR, "java"))
+BUILD_PY = os.path.join(REPO_DIR, "tools", "ci_build", "build.py")
+JAVA_ROOT = os.path.join(REPO_DIR, "java")
 
 sys.path.insert(0, os.path.join(REPO_DIR, "tools", "python"))
-from util import (is_windows)
+from util import is_windows  # noqa: E402
 
 # We by default will build all 4 ABIs
 DEFAULT_BUILD_ABIS = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
