@@ -67,6 +67,9 @@ class WindowsThread : public EnvThread {
 
  private:
   typedef HRESULT(WINAPI* SetThreadDescriptionFunc)(HANDLE hThread, PCWSTR lpThreadDescription);
+
+#pragma warning(push)
+#pragma warning(disable : 6387)
   static unsigned __stdcall ThreadMain(void* param) {
     std::unique_ptr<Param> p((Param*)param);
     // TODO: should I try to use SetThreadSelectedCpuSets?
@@ -102,6 +105,8 @@ class WindowsThread : public EnvThread {
     }
     return ret;
   }
+#pragma warning(pop)
+
   unsigned threadID = 0;
   wil::unique_handle hThread;
 };
