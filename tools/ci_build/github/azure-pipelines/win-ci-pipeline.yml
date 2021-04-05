@@ -37,7 +37,7 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '12.x'
-      force32bit: $(eq(variables.buildArch, 'x86'))
+      force32bit: $(eq(variables['buildArch'], 'x86'))
 
   - task: BatchScript@1
     displayName: 'setup env'
