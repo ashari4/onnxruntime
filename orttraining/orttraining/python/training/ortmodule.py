@@ -253,12 +253,15 @@ class ORTModule(torch.nn.Module):
                     num_user_input_grads = len(self._input_info.require_grad_names)
 
                     results = []
+                    require_grad_names_set = set(self._input_info.require_grad_names)
+                    require_grad_names_index = 0
                     for input_name in self._onnx_graphs_info.user_input_names:
-                        try:
-                            # Append to the results the backward output for each input that required grad
+                        # Append to the results the backward output for each input that required grad
+                        if input_name in require_grad_names_set:
                             results.append(_ortvalue_to_torch_tensor(
-                                backward_outputs[self._input_info.require_grad_names.index(input_name)]))
-                        except ValueError:
+                                backward_outputs[require_grad_names_index]))
+                            require_grad_names_index += 1
+                        else:
                             # input_name is not found in the self._input_names_require_grad list
                             # Append None to results for each input that did not require grad
                             results.append(None)

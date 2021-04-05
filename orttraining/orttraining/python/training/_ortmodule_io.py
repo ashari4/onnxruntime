@@ -7,15 +7,12 @@ import warnings
 
 
 class _InputInfo(object):
-    def __init__(self, names, shape, require_grad_names = [], dynamic_axes = {}, schema = []):
+    def __init__(self, names, shape, require_grad_names=None, dynamic_axes=None, schema=None):
         self.names = names
         self.shape = shape
-        self.require_grad_names = require_grad_names
-        self.dynamic_axes = dynamic_axes
-        self.schema = schema
-
-    def id(self) -> int:
-        return hash(repr(self.schema))
+        self.require_grad_names = require_grad_names if require_grad_names else []
+        self.dynamic_axes = dynamic_axes if dynamic_axes else {}
+        self.schema = schema if schema else []
 
 
 def _convert_input_to_list(param_names, user_input_names, buffer_names, *inputs, **kwargs):
