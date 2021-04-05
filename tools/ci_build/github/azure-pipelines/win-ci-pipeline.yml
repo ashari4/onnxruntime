@@ -6,7 +6,7 @@ parameters:
 
 jobs:
 - job: 'build'
-  pool: 'chasuntest1'
+  pool: 'Win-CPU-2019'
   strategy:
     matrix:
       x86_release:
@@ -37,7 +37,7 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '12.x'
-      force32bit: $(isX86)
+      force32bit: {{eq(variables['buildArch'], 'x86'))}}
 
   - task: BatchScript@1
     displayName: 'setup env'
