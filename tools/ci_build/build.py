@@ -1697,7 +1697,7 @@ def generate_documentation(source_dir, build_dir, configs):
             cwd=os.path.join(build_dir, config))
     docdiff = ''
     try:
-        docdiff = subprocess.check_output(['git', 'diff', opkernel_doc_path])
+        docdiff = subprocess.check_output(['git', 'diff', opkernel_doc_path], cwd=source_dir)
     except subprocess.CalledProcessError:
         print('git diff returned non-zero error code')
     if len(docdiff) > 0:
@@ -1712,7 +1712,7 @@ def generate_documentation(source_dir, build_dir, configs):
 
     docdiff = ''
     try:
-        docdiff = subprocess.check_output(['git', 'diff', operator_doc_path])
+        docdiff = subprocess.check_output(['git', 'diff', operator_doc_path], cwd=source_dir)
     except subprocess.CalledProcessError:
         print('git diff returned non-zero error code')
     if len(docdiff) > 0:
