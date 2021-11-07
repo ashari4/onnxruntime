@@ -988,7 +988,7 @@ void RegisterTrainingOpSchemas() {
           "Constrain step count to 64-bit integer")
       .TypeConstraint(
           "T3",
-          {"tensor(float)", "tensor(double)"},
+          {"tensor(float)", "tensor(double)", "tensor(bfloat16)"},
           "Constrain input types to float tensors.")
       .TypeConstraint(
           "T4",
