@@ -31,7 +31,7 @@ using ONNX_NAMESPACE::OPTIONAL_VALUE;
 using ONNX_NAMESPACE::DbgOperatorSetTracker;
 #endif
 
-static void CheckFitsInsideBoundingBox(const ONNX_NAMESPACE::TensorShapeProto& input_shape, const google::protobuf::RepeatedField<int64_t>& bounding_box_dims, const MSFPType& msfp_type) {
+static void CheckFitsInsideBoundingBox(const ONNX_NAMESPACE::TensorShapeProto& input_shape, const google::protobuf::RepeatedField<int64_t>& bounding_box_dims, const BFPType& bfp_type) {
   bool all_dim_values = true;
   int64_t numel = 1;
 
@@ -44,10 +44,10 @@ static void CheckFitsInsideBoundingBox(const ONNX_NAMESPACE::TensorShapeProto& i
     numel *= dim.dim_value();
   }
 
-  auto is_standard_msfp = msfp_type == MSFPType::MSFP_1_4_8_16 || msfp_type == MSFPType::MSFP_1_8_8_16;
+  auto is_custom_bfp = bfp_type == BFPType::Custom_BFP_0 || bfp_type == BFPType::Custom_BFP_0;
 
-  // all standard MSFP types use a bounding box size of 16
-  if (all_dim_values && is_standard_msfp && numel > 16) {
+  // all standard BFP types use a bounding box size of 16
+  if (all_dim_values && !is_custom_bfp && numel > 16) {
     fail_shape_inference("The number of elements in the bounding box dimensions exceeds the bounding box size.")
   }
 }
@@ -230,10 +230,10 @@ ONNX_MS_OPERATOR_SET_SCHEMA(DequantizeLinear, 1, OpSchema().Attr("axis",
                                                        updateOutputShape(ctx, 0, input_shape);
                                                      }));
 
-static const char* QuantizeMSFP_ver1_doc = R"DOC(
-The MSFP quantization operator. It consumes a full precision tensor and computes an MSFP tensor.)DOC";
+static const char* QuantizeBFP_ver1_doc = R"DOC(
+The BFP quantization operator. It consumes a full precision tensor and computes an BFP tensor.)DOC";
 
-ONNX_MS_OPERATOR_SET_SCHEMA(QuantizeMSFP, 1, OpSchema().Attr("MSFPType", "The type of MSFP - must match with the MSFPType enum", AttributeProto::INT).Attr("bounding_box_dims", "Each bounding box spans these dimensions. If not specified, then it is up to the implementation to decide.", AttributeProto::INTS, false).Input(0, "x", "N-D full precision input tensor to be quantized.", "T1").Output(0, "y", "1-D, contiguous MSFP data", "T2").Output(1, "shape", "Shape of x", "T3").Output(2, "strides", "Strides of x", "T3").TypeConstraint("T1", {"tensor(float)", "tensor(bfloat16)"}, "Constrain the input to float and bfloat.").TypeConstraint("T2", {"tensor(uint8)"}, "Constrain y to uint8.").TypeConstraint("T3", {"tensor(int64)"}, "Constrain shape and strides to uint64.").SetDoc(QuantizeMSFP_ver1_doc).TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+ONNX_MS_OPERATOR_SET_SCHEMA(QuantizeBFP, 1, OpSchema().Attr("bfp_type", "The type of BFP - must match with the BFPType enum", AttributeProto::INT).Attr("bounding_box_dims", "Each bounding box spans these dimensions. If not specified, then it is up to the implementation to decide.", AttributeProto::INTS, false).Input(0, "x", "N-D full precision input tensor to be quantized.", "T1").Output(0, "y", "1-D, contiguous BFP data", "T2").Output(1, "shape", "Shape of x", "T3").Output(2, "strides", "Strides of x", "T3").TypeConstraint("T1", {"tensor(float)", "tensor(bfloat16)"}, "Constrain the input to float and bfloat.").TypeConstraint("T2", {"tensor(uint8)"}, "Constrain y to uint8.").TypeConstraint("T3", {"tensor(int64)"}, "Constrain shape and strides to uint64.").SetDoc(QuantizeBFP_ver1_doc).TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
   if (!hasInputShape(ctx, 0))
     return;
 
@@ -241,8 +241,8 @@ ONNX_MS_OPERATOR_SET_SCHEMA(QuantizeMSFP, 1, OpSchema().Attr("MSFPType", "The ty
   auto bounding_box_dims_proto = ctx.getAttribute("bounding_box_dims");
   if (bounding_box_dims_proto != nullptr) {
     auto bounding_box_dims = bounding_box_dims_proto->ints();
-    auto msfp_type = static_cast<MSFPType>(ctx.getAttribute("MSFPType")->i());
-    CheckFitsInsideBoundingBox(input_shape, bounding_box_dims, msfp_type);
+    auto bfp_type = static_cast<BFPType>(ctx.getAttribute("bfp_type")->i());
+    CheckFitsInsideBoundingBox(input_shape, bounding_box_dims, bfp_type);
   }
 
   auto num_dims = input_shape.dim_size();
@@ -252,19 +252,19 @@ ONNX_MS_OPERATOR_SET_SCHEMA(QuantizeMSFP, 1, OpSchema().Attr("MSFPType", "The ty
   updateOutputShape(ctx, 2, {num_dims_proto});
 }));
 
-static const char* DequantizeMSFP_ver1_doc = R"DOC(
-The MSFP dequantization operator. It consumes the raw MSFP data and some metadata such as the shape and strides of the original tensor and computes the dequantized tensor.)DOC";
+static const char* DequantizeBFP_ver1_doc = R"DOC(
+The BFP dequantization operator. It consumes the raw BFP data and some metadata such as the shape and strides of the original tensor and computes the dequantized tensor.)DOC";
 
-ONNX_MS_OPERATOR_SET_SCHEMA(DequantizeMSFP, 1, OpSchema().Attr("MSFPType", "The type of MSFP - must match with the MSFPType enum", AttributeProto::INT).Attr("bounding_box_dims", "Each bounding box spans these dimensions. If not specified, then it is up to the implementation to decide.", AttributeProto::INTS).Attr("dtype", "The datatype to dequantize to.", AttributeProto::INT,
+ONNX_MS_OPERATOR_SET_SCHEMA(DequantizeBFP, 1, OpSchema().Attr("bfp_type", "The type of BFP - must match with the BFPType enum", AttributeProto::INT).Attr("bounding_box_dims", "Each bounding box spans these dimensions. If not specified, then it is up to the implementation to decide.", AttributeProto::INTS).Attr("dtype", "The datatype to dequantize to.", AttributeProto::INT,
                                                                                                                                                                                                                                                                                                                            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_FLOAT))  // default
-                                                   .Input(0, "x", "1-D, contiguous, raw, MSFP data to be de-quantized.", "T1")
+                                                   .Input(0, "x", "1-D, contiguous, raw, BFP data to be de-quantized.", "T1")
                                                    .Input(1, "shape", "shape of the original tensor.", "T2")
                                                    .Input(2, "strides", "strides of the original tensor.", "T2")
                                                    .Output(0, "y", "de-quantized tensor.", "T3")
                                                    .TypeConstraint("T1", {"tensor(uint8)"}, "Constrain the input to uint8.")
                                                    .TypeConstraint("T2", {"tensor(int64)"}, "Constrain shape and strides to uint64.")
                                                    .TypeConstraint("T3", {"tensor(float)", "tensor(bfloat16)"}, "Constrain y to float and bfloat16.")
-                                                   .SetDoc(DequantizeMSFP_ver1_doc)
+                                                   .SetDoc(DequantizeBFP_ver1_doc)
                                                    .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
                                                      if (hasInputShape(ctx, 0)) {
                                                        auto& input_shape = getInputShape(ctx, 0);

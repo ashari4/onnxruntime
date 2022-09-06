@@ -10,7 +10,7 @@
 namespace onnxruntime {
 namespace test {
 
-TEST(QuantizeMSFPTest, CreateQuantizeGraph) {
+TEST(QuantizeBFPTest, CreateQuantizeGraph) {
   std::unordered_map<std::string, int> domain_to_version;
   domain_to_version[onnxruntime::kMSDomain] = 1;
   // Generate the input & output def lists
@@ -30,11 +30,11 @@ TEST(QuantizeMSFPTest, CreateQuantizeGraph) {
   input_defs.push_back(&input_arg_x);
 
   NodeAttributes attributes;
-  ONNX_NAMESPACE::AttributeProto msfp_type;
-  msfp_type.set_name("MSFPType");
-  msfp_type.set_i(static_cast<int64_t>(MSFPType::MSFP_1_8_8_16));
-  msfp_type.set_type(ONNX_NAMESPACE::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
-  attributes["MSFPType"] = msfp_type;
+  ONNX_NAMESPACE::AttributeProto bfp_type;
+  bfp_type.set_name("bfp_type");
+  bfp_type.set_i(static_cast<int64_t>(BFPType::BFP_1_8_8_16));
+  bfp_type.set_type(ONNX_NAMESPACE::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
+  attributes["bfp_type"] = bfp_type;
   ONNX_NAMESPACE::AttributeProto bounding_box_dims;
   bounding_box_dims.set_name("bounding_box_dims");
   bounding_box_dims.add_ints(1);  // bounding box is over dimension 1
@@ -56,8 +56,8 @@ TEST(QuantizeMSFPTest, CreateQuantizeGraph) {
 
   // Create a simple model
   graph.AddNode("node1",
-                "QuantizeMSFP",
-                "quantizes float tensor to MSFP",
+                "QuantizeBFP",
+                "quantizes float tensor to BFP",
                 input_defs,
                 output_defs,
                 &attributes, onnxruntime::kMSDomain);
@@ -65,7 +65,7 @@ TEST(QuantizeMSFPTest, CreateQuantizeGraph) {
   ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
 }
 
-TEST(DequantizeMSFPTest, CreateDequantizeGraph) {
+TEST(DequantizeBFPTest, CreateDequantizeGraph) {
   std::unordered_map<std::string, int> domain_to_version;
   domain_to_version[onnxruntime::kMSDomain] = 1;
   // Generate the input & output def lists
@@ -92,11 +92,11 @@ TEST(DequantizeMSFPTest, CreateDequantizeGraph) {
   input_defs.push_back(&input_arg_strides);
 
   NodeAttributes attributes;
-  ONNX_NAMESPACE::AttributeProto msfp_type;
-  msfp_type.set_name("MSFPType");
-  msfp_type.set_i(static_cast<int64_t>(MSFPType::MSFP_1_8_8_16));
-  msfp_type.set_type(ONNX_NAMESPACE::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
-  attributes["MSFPType"] = msfp_type;
+  ONNX_NAMESPACE::AttributeProto bfp_type;
+  bfp_type.set_name("bfp_type");
+  bfp_type.set_i(static_cast<int64_t>(BFPType::BFP_1_8_8_16));
+  bfp_type.set_type(ONNX_NAMESPACE::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
+  attributes["bfp_type"] = bfp_type;
   ONNX_NAMESPACE::AttributeProto bounding_box_dims;
   bounding_box_dims.set_name("bounding_box_dims");
   bounding_box_dims.add_ints(1);  // bounding box is over dimension 1
@@ -116,8 +116,8 @@ TEST(DequantizeMSFPTest, CreateDequantizeGraph) {
 
   // Create a simple model
   graph.AddNode("node1",
-                "DequantizeMSFP",
-                "dequantizes MSFP tensor to float",
+                "DequantizeBFP",
+                "dequantizes BFP tensor to float",
                 input_defs,
                 output_defs,
                 &attributes, onnxruntime::kMSDomain);
