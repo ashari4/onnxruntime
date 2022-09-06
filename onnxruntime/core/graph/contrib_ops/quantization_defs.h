@@ -13,12 +13,9 @@
 namespace onnxruntime {
 namespace contrib {
 
-void ValidateTypeAndShapeForScaleAndZP(
-    ONNX_NAMESPACE::InferenceContext& ctx,
-    int index,
-    ::google::protobuf::int32 expectedType,
-    bool isScalar,
-    int expectedTensorSize = 0);
+void ValidateTypeAndShapeForScaleAndZP(ONNX_NAMESPACE::InferenceContext& ctx, int index,
+                                       ::google::protobuf::int32 expectedType, bool isScalar,
+                                       int expectedTensorSize = 0);
 
 }
 
