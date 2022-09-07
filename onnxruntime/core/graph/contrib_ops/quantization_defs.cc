@@ -244,7 +244,7 @@ ONNX_MS_OPERATOR_SET_SCHEMA(QuantizeBFP, 1,
                                 .Output(0, "y", "1-D, contiguous BFP data", "T2")
                                 .Output(1, "shape", "Shape of x", "T3")
                                 .Output(2, "strides", "Strides of x", "T3")
-                                .TypeConstraint("T1", {"tensor(float)", "tensor(bfloat16)"},
+                                .TypeConstraint("T1", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
                                                 "Constrain the input to float and bfloat.")
                                 .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain y to uint8.")
                                 .TypeConstraint("T3", {"tensor(int64)"}, "Constrain shape and strides to uint64.")
@@ -286,7 +286,7 @@ ONNX_MS_OPERATOR_SET_SCHEMA(
         .Output(0, "y", "de-quantized tensor.", "T3")
         .TypeConstraint("T1", {"tensor(uint8)"}, "Constrain the input to uint8.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain shape and strides to uint64.")
-        .TypeConstraint("T3", {"tensor(float)", "tensor(bfloat16)"}, "Constrain y to float and bfloat16.")
+        .TypeConstraint("T3", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "Constrain y to float and bfloat16.")
         .SetDoc(DequantizeBFP_ver1_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (hasInputShape(ctx, 0)) {
