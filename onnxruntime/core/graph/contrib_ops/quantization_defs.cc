@@ -32,7 +32,7 @@ static void CheckFitsInsideBoundingBox(const ONNX_NAMESPACE::TensorShapeProto& i
   int64_t numel = 1;
 
   for (auto i = 0; i < bounding_box_dims.size(); i++) {
-    auto dim = input_shape.dim(bounding_box_dims[i]);
+    auto dim = input_shape.dim(static_cast<int>(bounding_box_dims[i]));
     if (!dim.has_dim_value()) {
       all_dim_values = false;
       break;
@@ -299,7 +299,7 @@ ONNX_MS_OPERATOR_SET_SCHEMA(
 
           auto y_type = ctx.getOutputType(0);
           auto dtype_proto = ctx.getAttribute("dtype");
-          y_type->mutable_tensor_type()->set_elem_type(dtype_proto->i());
+          y_type->mutable_tensor_type()->set_elem_type(static_cast<int>(dtype_proto->i()));
         }));
 
 ONNX_MS_OPERATOR_SET_SCHEMA(ReduceSumInteger, 1,
