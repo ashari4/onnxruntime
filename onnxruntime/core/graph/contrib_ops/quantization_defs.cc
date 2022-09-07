@@ -286,7 +286,8 @@ ONNX_MS_OPERATOR_SET_SCHEMA(
         .Output(0, "y", "de-quantized tensor.", "T3")
         .TypeConstraint("T1", {"tensor(uint8)"}, "Constrain the input to uint8.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain shape and strides to uint64.")
-        .TypeConstraint("T3", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "Constrain y to float and bfloat16.")
+        .TypeConstraint("T3", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+                        "Constrain y to float and bfloat16.")
         .SetDoc(DequantizeBFP_ver1_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (hasInputShape(ctx, 0)) {
