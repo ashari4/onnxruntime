@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "core/providers/cpu/quantization/quantize_linear.h"
+#include "core/providers/cpu/quantization/quantize_bfp.h"
 #include "core/providers/common.h"
 
 namespace onnxruntime {
@@ -43,5 +44,14 @@ ONNX_CPU_OPERATOR_TYPED_MS_KERNEL(
         .TypeConstraint("T2", DataTypeImpl::GetTensorType<int8_t>()),
     QuantizeLinear<int8_t>);
 
+ONNX_CPU_OPERATOR_MS_KERNEL(QuantizeBFP,
+  1,
+  (*KernelDefBuilder::Create()),
+  QuantizeBFP);
+
+ONNX_CPU_OPERATOR_MS_KERNEL(DequantizeBFP,
+  1,
+  (*KernelDefBuilder::Create()),
+  DequantizeBFP);
 }  // namespace contrib
 }  // namespace onnxruntime
