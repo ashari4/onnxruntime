@@ -143,7 +143,8 @@ class GraphExecutionManager(GraphExecutionInterface):
         self._use_static_shape = False
 
         # flag to enable symbolic shape inference for dynamic shape inputs to improve performance
-        self._run_symbolic_shape_infer = True
+        # TODO: 0000 this sets the type to torch.float32 for edges with an unassigned type.
+        self._run_symbolic_shape_infer = False
 
         # PyTorch custom Autograd function support
         from ._custom_autograd_function import custom_autograd_function_enabler
