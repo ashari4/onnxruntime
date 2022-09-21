@@ -155,6 +155,8 @@ class GradientGraphBuilder {
       ONNX_NAMESPACE::TensorProto_DataType_FLOAT16,
       ONNX_NAMESPACE::TensorProto_DataType_DOUBLE,
       ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16,
+      ONNX_NAMESPACE::TensorProto_DataType_UINT8,
+      ONNX_NAMESPACE::TensorProto_DataType_INT64
   };
   const std::unordered_set<size_t>* GetStopGradientEdges(const Node& node) const;
 

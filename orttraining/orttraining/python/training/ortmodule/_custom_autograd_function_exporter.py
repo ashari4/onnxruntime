@@ -37,7 +37,7 @@ _CAST_PYTORCH_TO_ONNX = {
     "Bool": torch.onnx.TensorProtoDataType.BOOL,
     "ComplexFloat": torch.onnx.TensorProtoDataType.COMPLEX64,
     "ComplexDouble": torch.onnx.TensorProtoDataType.COMPLEX128,
-    "BFloat16": torch.onnx.TensorProtoDataType.BFLOAT16,
+    # "BFloat16": torch.onnx.TensorProtoDataType.BFLOAT16,
     "Undefined": torch.onnx.TensorProtoDataType.UNDEFINED,
 }
 
