@@ -85,5 +85,8 @@ DECLARE_GRADIENT_BUILDER(GetExternalGradient)
 DECLARE_GRADIENT_BUILDER(GetQuantizeBFPGradient)
 DECLARE_GRADIENT_BUILDER(GetDequantizeBFPGradient)
 
+DECLARE_GRADIENT_BUILDER(Get)
+
+
 }  // namespace training
 }  // namespace onnxruntime
