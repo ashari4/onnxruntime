@@ -1862,5 +1862,29 @@ IMPLEMENT_GRADIENT_BUILDER(GetScatterElementsGradient) {
   return result;
 }
 
+IMPLEMENT_GRADIENT_BUILDER(GetQuantizeBFPGradient) {
+  auto& src_attributes = SrcNodeAttributes();
+  std::vector<AttributeProto> attributes;
+  attributes.push_back(MakeAttribute("bfp_type", src_attributes.at("bfp_type").i()));
+  attributes.push_back(src_attributes.at("block_dims"));
+  attributes.push_back(MakeAttribute("dtype", int64_t(IElemType(0))));
+  return std::vector<NodeDef>{
+      NodeDef(OpDef{"DequantizeBFP", kMSDomain, 1},
+              {GO(0), GO(1), GO(2)},
+              {GI(0)},
+              attributes)};
+}
+
+IMPLEMENT_GRADIENT_BUILDER(GetDequantizeBFPGradient) {
+  auto& src_attributes = SrcNodeAttributes();
+  std::vector<AttributeProto> attributes;
+  attributes.push_back(MakeAttribute("bfp_type", src_attributes.at("bfp_type").i()));
+  attributes.push_back(src_attributes.at("block_dims"));
+  return std::vector<NodeDef>{
+      NodeDef(OpDef{"QuantizeBFP", kMSDomain, 1},
+              {GO(0)},
+              {GI(0), GI(1), GI(2)},
+              attributes)};
+}
 }  // namespace training
 }  // namespace onnxruntime

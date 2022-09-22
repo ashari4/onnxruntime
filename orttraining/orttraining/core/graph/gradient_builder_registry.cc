@@ -113,6 +113,9 @@ void GradientBuilderRegistry::RegisterGradientBuilders() {
   REGISTER_GRADIENT_BUILDER("Trilu", GetTriluGradient);
 
   REGISTER_GRADIENT_BUILDER("ExternalGradient", GetExternalGradient);
+
+  REGISTER_GRADIENT_BUILDER("QuantizeBFP", GetQuantizeBFPGradient);
+  REGISTER_GRADIENT_BUILDER("DequantizeBFP", GetDequantizeBFPGradient);
 };
 
 }  // namespace training
