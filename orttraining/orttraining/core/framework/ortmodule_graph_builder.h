@@ -42,7 +42,17 @@ struct OrtModuleGraphBuilderConfiguration {
 
   // Log severity
   logging::Severity loglevel{logging::Severity::kWARNING};
+
 };
+
+/**
+ * How to quantize a tensor.
+ */
+ struct BFPConfig
+ {
+  int64_t bfp_type;
+  int64_t block_dim;
+ };
 
 /**
  * The information of graphs for frontend.
@@ -113,11 +123,6 @@ class OrtModuleGraphBuilder {
   GraphInfo GetGraphInfo() const { return graph_info_; }
 
  private:
- struct BFPConfig
- {
-  int64_t bfp_type;
-  int64_t block_dim;
- };
  using InputQConfigs = std::unordered_map<std::string, BFPConfig>;
 
   // Set concrete shapes for graph inputs.

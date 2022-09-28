@@ -12,6 +12,59 @@ namespace training {
 
 using namespace onnxruntime::common;
 
+using InputQConfigs = std::unordered_map<std::string, BFPConfig>;
+
+// "<op name>,<BFP>,n,<input_name:bfp_type:block_dim>,..."
+static std::pair<std::string, InputQConfigs> ParseQConfig(const std::string& s, const logging::Logger& logger)
+{
+  InputQConfigs input_qconfigs{};
+  if (s.empty())
+  {
+    ORT_THROW("Configuration string for node should not be empty");
+  }
+
+  // returns the next token before the delimiter. updates pos to after the delimiter.
+  auto GetNext = [](const std::string& s, char delimiter, size_t& pos) -> std::string
+  {
+    auto end = s.find_first_of(delimiter, pos);
+    std::string next;
+    if (end == std::string::npos)
+    {
+      next = s.substr(pos);
+      pos = end;
+    }
+    else
+    {
+      next = s.substr(pos, end - pos);
+      pos = end + 1;
+    }
+    return next;
+  };
+
+  size_t pos = 0;
+  auto node_name = GetNext(s, ',', pos);
+  auto q_type = GetNext(s, ',', pos);
+  if (q_type != "BFP")
+  {
+    ORT_THROW("Only BFP quantization supported");
+  }
+  auto num_inputs = std::stoi(GetNext(s, ',', pos));
+  if (num_inputs < 1)
+  {
+    ORT_THROW("expect at least 1 input for node");
+  }
+
+  for (decltype(num_inputs) i = 0; i < num_inputs; i++)
+  {
+    auto input_name = GetNext(s, ':', pos);
+    auto bfp_type = static_cast<int64_t>(std::stoi(GetNext(s, ':', pos)));
+    auto block_dim = static_cast<int64_t>(std::stoi(GetNext(s, ',', pos)));
+    input_qconfigs[input_name] = BFPConfig{bfp_type, block_dim};
+    LOGS(logger, VERBOSE) << "Node: " << node_name << ", input tensor name: " << input_name << ", BFP type: " << bfp_type << ", block dimension: " << block_dim;
+  }
+  return std::pair{node_name, input_qconfigs};
+}
+
 Status OrtModuleGraphBuilder::Initialize(std::istream& model_istream,
                                          const OrtModuleGraphBuilderConfiguration& config) {
   // Save the model and config.
@@ -61,7 +114,11 @@ Status OrtModuleGraphBuilder::Initialize(std::istream& model_istream,
   graph.SetInputs(input_args);
   logging::LoggingManager::SetDefaultLoggerSeverity(config_.loglevel);
 
-  // todo: ah set q_configs_
+  for (auto s : config.backward_ops_to_quantize)
+  {
+    auto result = ParseQConfig(s, *logger_);
+    q_configs_[result.first] = result.second;
+  }
   return Status::OK();
 }
 

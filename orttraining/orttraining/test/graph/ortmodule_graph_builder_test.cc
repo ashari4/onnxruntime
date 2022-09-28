@@ -38,14 +38,14 @@ TEST(ORTModuleGraphBuilderTest, BuildMatMulGraphTest) {
     config.build_gradient_graph = true;
     config.loglevel = logging::Severity::kVERBOSE;
 
+    // format: "<op name>,<BFP>,n,<input_name:bfp_type:block_dim>,..."
+    std::string dx_qconfig = "MatMul_0_Grad/Gemm_0,BFP,2,Y_grad:0:1,W:0:1";
+    std::string dw_qconfig = "MatMul_0_Grad/Gemm_1,BFP,2,X:0:0,Y_grad:0:0";
+    config.backward_ops_to_quantize = {dx_qconfig, dw_qconfig};
+
     std::ifstream model_stream(MATMUL_MODEL_PATH, std::ios::in | std::ios::binary);
     graph_builder.Initialize(model_stream, config);
 
-    // todo: ah set the bw ops in the config
-    // format: "<op name>,<BFP>,n,<input_name:bfp_type:block_dim>,..."
-    std::string dx_qconfig = "Gemm,BFP,2,Y_grad:0:1,W:0:1";
-    std::string dw_qconfig = "Gemm,BFP,2,X:0:0,Y_grad:0:0";
-    config.backward_ops_to_quantize = {dx_qconfig, dw_qconfig};
     graph_builder.Build();
 
     // todo: ah remove this. this is for debugging purposes.
