@@ -493,6 +493,11 @@ class GraphExecutionManager(GraphExecutionInterface):
             self._debug_options.logging.log_level
         )
         grad_builder_config.use_memory_efficient_gradient = self._use_memory_efficient_gradient
+
+        # todo ah: plumb this through ORTModule
+        # see ortmodule_graph_builder.h for how to format the string
+        grad_builder_config.backward_ops_to_quantize = os.environ.get("BACKWARD_OPS_TO_QUANTIZE", "")
+
         self._graph_builder = C.OrtModuleGraphBuilder()
 
         # It is assumed here that the order and names of the inputs and outputs are not modified by the backend in any way

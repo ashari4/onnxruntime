@@ -24,6 +24,14 @@ struct OrtModuleGraphBuilderConfiguration {
   // The names of inputs that require gradient.
   std::vector<std::string> input_names_require_grad{};
 
+  // If the backward operator appears in this list, quantize its inputs.
+  // string format: "<op name>,<BFP>,<block_dim_0>,..."
+  // If BFP is specified, then QuantizeBFP and DequantizeBFP nodes are added.
+  // In the future, other types of quantization like Linear can be added.
+  // If the quantization type is BFP, then block_dim_i specifies how the block dimension for operand i
+  // todo: does not support 2 MatMuls that quantize in different ways.
+  std::vector<std::string> backward_ops_to_quantize{};
+
   // Graph configuration.
   bool use_memory_efficient_gradient = false;
   bool build_gradient_graph = true;
@@ -123,6 +131,9 @@ class OrtModuleGraphBuilder {
 
   // Reorder gradient graph outputs.
   void ReorderOutputs();
+
+  // Add Q and DQ operators for nodes that accept quantized inputs.
+  void AddQDQ();
 
   // Find the module output that are needed for backward computation
   void FindModuleOutputNeededForBackward();

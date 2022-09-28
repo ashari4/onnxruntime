@@ -99,6 +99,9 @@ Status OrtModuleGraphBuilder::Build(const std::vector<std::vector<int64_t>>* inp
   // Reorder outputs.
   ReorderOutputs();
 
+  // Add Q and DQ operators for nodes that accept quantized inputs.
+  AddQDQ();
+
   // Find module outputs needed for backward computation
   FindModuleOutputNeededForBackward();
 
@@ -409,6 +412,8 @@ void OrtModuleGraphBuilder::ReorderOutputs() {
 
   gradient_graph.SetOutputs(new_output_args);
 }
+
+void OrtModuleGraphBuilder::AddQDQ() {}
 
 void OrtModuleGraphBuilder::FindModuleOutputNeededForBackward() {
   Graph& gradient_graph = gradient_model_->MainGraph();
