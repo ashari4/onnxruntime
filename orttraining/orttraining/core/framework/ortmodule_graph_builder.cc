@@ -60,6 +60,8 @@ Status OrtModuleGraphBuilder::Initialize(std::istream& model_istream,
 
   graph.SetInputs(input_args);
   logging::LoggingManager::SetDefaultLoggerSeverity(config_.loglevel);
+
+  // todo: ah set q_configs_
   return Status::OK();
 }
 
@@ -413,7 +415,28 @@ void OrtModuleGraphBuilder::ReorderOutputs() {
   gradient_graph.SetOutputs(new_output_args);
 }
 
-void OrtModuleGraphBuilder::AddQDQ() {}
+void OrtModuleGraphBuilder::AddQDQ() {
+  Graph& gradient_graph = gradient_model_->MainGraph();
+  for (auto& node : gradient_graph.Nodes()) {
+    auto it = q_configs_.find(node.Name());
+    if (it == q_configs_.end())
+    {
+      LOGS(*logger_, VERBOSE) << "Skipping quantize for " << node.Name();
+      continue;
+    }
+    auto input_q_configs = it->second;
+    for (const auto& input : node.InputDefs())
+    {
+      auto input_info = input_q_configs.find(input->Name());
+      if (input_info == input_q_configs.end())
+      {
+        continue;
+      }
+      // todo: ah add a Q,DQ pair using input_info.bfp_type and input_info.block_dim
+      LOGS(*logger_, VERBOSE) << "Added Q and DQ nodes for operator " << input->Name();
+    }
+  }
+}
 
 void OrtModuleGraphBuilder::FindModuleOutputNeededForBackward() {
   Graph& gradient_graph = gradient_model_->MainGraph();

@@ -5,6 +5,7 @@
 
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "core/common/status.h"
 #include "core/graph/model.h"
@@ -25,11 +26,10 @@ struct OrtModuleGraphBuilderConfiguration {
   std::vector<std::string> input_names_require_grad{};
 
   // If the backward operator appears in this list, quantize its inputs.
-  // string format: "<op name>,<BFP>,<block_dim_0>,..."
+  // string format: "<op name>,<BFP>,<input_name:block_dim>,..."
   // If BFP is specified, then QuantizeBFP and DequantizeBFP nodes are added.
   // In the future, other types of quantization like Linear can be added.
-  // If the quantization type is BFP, then block_dim_i specifies how the block dimension for operand i
-  // todo: does not support 2 MatMuls that quantize in different ways.
+  // If the quantization type is BFP, then block_dim specifies the block dimension for the operand with name input_name
   std::vector<std::string> backward_ops_to_quantize{};
 
   // Graph configuration.
@@ -113,6 +113,13 @@ class OrtModuleGraphBuilder {
   GraphInfo GetGraphInfo() const { return graph_info_; }
 
  private:
+ struct BFPConfig
+ {
+  int64_t bfp_type;
+  int64_t block_dim;
+ };
+ using InputQConfigs = std::unordered_map<std::string, BFPConfig>;
+
   // Set concrete shapes for graph inputs.
   void SetConcreteInputShapes(const std::vector<std::vector<int64_t>>& input_shapes);
 
@@ -146,6 +153,7 @@ class OrtModuleGraphBuilder {
   std::shared_ptr<onnxruntime::Model> inference_optimized_model_;
   std::shared_ptr<onnxruntime::Model> gradient_model_;
   GraphInfo graph_info_;
+  std::unordered_map<std::string, InputQConfigs> q_configs_;
 
   OrtModuleGraphBuilderConfiguration config_;
   const logging::Logger* logger_ = &logging::LoggingManager::DefaultLogger();  // use default logger for now.
