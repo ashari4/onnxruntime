@@ -16,20 +16,6 @@ namespace graph_utils {
 //--- local helpers ---
 //---------------------
 
-#if !defined(ORT_MINIMAL_BUILD) || defined(ORT_EXTENDED_MINIMAL_BUILD)
-
-static int GetIndexFromName(const Node& node, const std::string& name, bool is_input) {
-  const auto& node_args = is_input ? node.InputDefs() : node.OutputDefs();
-  auto itr = std::find_if(node_args.begin(), node_args.end(),
-                          [&name](const NodeArg* node_arg) { return node_arg->Name() == name; });
-  ORT_ENFORCE(itr != node_args.end(),
-              "Attempting to get index by a name which does not exist:", name, "for node: ", node.Name());
-  auto index = std::distance(node_args.begin(), itr);
-  return static_cast<int>(index);
-}
-
-#endif  // !defined(ORT_MINIMAL_BUILD) || defined(ORT_EXTENDED_MINIMAL_BUILD)
-
 #if !defined(ORT_MINIMAL_BUILD)
 
 // check if an output edge provides an implicit input to the destination node

@@ -11,6 +11,7 @@ namespace onnxruntime {
 namespace training {
 
 using namespace onnxruntime::common;
+using namespace onnxruntime::graph_utils;
 
 using InputQConfigs = std::unordered_map<std::string, BFPConfig>;
 
@@ -474,23 +475,103 @@ void OrtModuleGraphBuilder::ReorderOutputs() {
 
 void OrtModuleGraphBuilder::AddQDQ() {
   Graph& gradient_graph = gradient_model_->MainGraph();
-  for (auto& node : gradient_graph.Nodes()) {
-    auto it = q_configs_.find(node.Name());
-    if (it == q_configs_.end())
+
+  for (auto& [node_name, input_qconfigs] : q_configs_)
+  {
+    for (auto& [input_name, bfp_config] : input_qconfigs)
     {
-      LOGS(*logger_, VERBOSE) << "Skipping quantize for " << node.Name();
-      continue;
-    }
-    auto input_q_configs = it->second;
-    for (const auto& input : node.InputDefs())
-    {
-      auto input_info = input_q_configs.find(input->Name());
-      if (input_info == input_q_configs.end())
+      auto input = gradient_graph.GetNodeArg(input_name);
+      auto producer = gradient_graph.GetMutableProducerNode(input_name);
+      auto consumers = gradient_graph.GetMutableConsumerNodes(input_name);
+      auto it = std::find_if(consumers.begin(), consumers.end(), [&node_name](auto consumer) { return consumer->Name() == node_name; });
+      if (it == consumers.end())
       {
-        continue;
+        ORT_THROW("Cannot find consumer node for tensor");
       }
-      // todo: ah add a Q,DQ pair using input_info.bfp_type and input_info.block_dim
-      LOGS(*logger_, VERBOSE) << "Added Q and DQ nodes for operator " << input->Name();
+      auto consumer = *it;
+
+      // add q and dq nodes
+      auto q_name = input_name + "/" + consumer->Name() + "_QuantizeBFP";
+      q_name = gradient_graph.GenerateNodeName(q_name);
+      auto& q_output_0 = gradient_graph.GetOrCreateNodeArg(gradient_graph.GenerateNodeArgName(input_name + "_quantized"), nullptr);
+      auto& q_output_1 = gradient_graph.GetOrCreateNodeArg(gradient_graph.GenerateNodeArgName(input_name + "_shape"), nullptr);
+      auto& q_output_2 = gradient_graph.GetOrCreateNodeArg(gradient_graph.GenerateNodeArgName(input_name + "_stride"), nullptr);
+
+      NodeAttributes q_attributes{};
+
+      ONNX_NAMESPACE::AttributeProto bfp_type;
+      bfp_type.set_name("bfp_type");
+      bfp_type.set_type(ONNX_NAMESPACE::AttributeProto::INT);
+      bfp_type.set_i(bfp_config.bfp_type);
+      q_attributes.insert({"bfp_type", bfp_type});
+
+      ONNX_NAMESPACE::AttributeProto block_dims;
+      block_dims.set_name("block_dims");
+      block_dims.set_type(ONNX_NAMESPACE::AttributeProto::INTS);
+      block_dims.add_ints(bfp_config.block_dim);
+      q_attributes.insert({"block_dims", block_dims});
+
+      auto& q = gradient_graph.AddNode(
+        q_name,
+        "QuantizeBFP",
+        "",
+        {input}, // input args
+        {&q_output_0, &q_output_1, &q_output_2}, // output args
+        &q_attributes,
+        kMSDomain
+      );
+
+      auto& dq_output = gradient_graph.GetOrCreateNodeArg(gradient_graph.GenerateNodeArgName(input_name + "_dequantized"), input->TypeAsProto());
+
+      NodeAttributes dq_attributes{};
+
+      ONNX_NAMESPACE::AttributeProto dtype;
+      dtype.set_name("dtype");
+      dtype.set_type(ONNX_NAMESPACE::AttributeProto::INT);
+      dtype.set_i(0); // todo: ah set the dtype here.
+      q_attributes.insert({"dtype", dtype});
+
+      dq_attributes.insert({"bfp_type", bfp_type});
+      dq_attributes.insert({"block_dims", block_dims});
+
+      auto dq_name = input_name + "/" + consumer->Name() + "_DequantizeBFP";
+      dq_name = gradient_graph.GenerateNodeName(dq_name);
+
+      auto& dq = gradient_graph.AddNode(
+        dq_name,
+        "DequantizeBFP",
+        "",
+        {&q_output_0, &q_output_1, &q_output_2}, // input args
+        {&dq_output}, // output args
+        &dq_attributes,
+        kMSDomain
+      );
+
+      // set up edges
+      auto consumer_index = consumer ? consumer->Index() : 0;
+      auto producer_index = producer ? producer->Index() : 0;
+      auto output_index = producer ? graph_utils::GetIndexFromName(*producer, input_name, false /* is_input */) : 0;
+      auto input_index = consumer ? graph_utils::GetIndexFromName(*consumer, input_name, true /* is_input */) : 0;
+
+      if (consumer && producer) {
+        gradient_graph.RemoveEdge(producer_index, consumer_index, output_index, input_index);
+      }
+      if (producer)
+      {
+        producer->MutableOutputDefs()[output_index] = input;
+        gradient_graph.AddEdge(producer_index, q.Index(), producer_index, 0);
+      }
+
+
+      gradient_graph.AddEdge(q.Index(), dq.Index(), 0, 0);
+
+      if (consumer)
+      {
+        consumer->MutableInputDefs()[input_index] = &dq_output;
+        gradient_graph.AddEdge(dq.Index(), consumer_index, 0, input_index);
+      }
+
+      LOGS(*logger_, VERBOSE) << "Added Q and DQ nodes for operator " << input_name;
     }
   }
 }
